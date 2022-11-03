@@ -55,6 +55,36 @@ X = Y = df['average_word2vec'].tolist()
 cos_sim_matrix = pd.DataFrame(cos_sim_matrix, columns=col_id_li).set_index(pd.Index(col_id_li))
 k = 4
 x = np.stack(df['average_word2vec'], axis=0)
+kmeans = KMeans(n_clusters=k, random_state=42)
+clusters_pred = kmeans.fit_predict(x)
+
+df['group'] = kmeans.labels_
+
+def _rmse(vec1, vec2):
+    vdiff = vec1 - vec2
+    rmse = np.sqrt(np.mean(vdiff**2))
+    return rmse
+    
+    
+li_all = []
+for v1 in tqdm(kmeans.cluster_centers_):
+    li = []
+    for v2 in kmeans.cluster_centers_:
+        res = _rmse(v1, v2)
+        li.append(res)
+    li_all.append(li)
+ 
+ 
+cluster_center_eclidean_dist = pd.DataFrame(li_all)
+
+cluster_center_eclidean_dist
 
 
+with open('./Data/network_graph_data.json', 'w', encoding='utf-8') as f:
+    df.to_json(f, force_ascii=False, orient='records')
+  
+cos_sim_matrix.iloc[:5, :5]
+
+with open('./Data/cos_sim_matrix.json', 'w', enconding='utf-8') as f:
+    cos_sim_matrix.to_json(f, force_ascii=False, orient='index')
 ```
