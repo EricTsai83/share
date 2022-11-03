@@ -1,4 +1,5 @@
 ### convert fullwidth to halfwidth
+```python
 def strQ2B(ustring):
     rstring = ''
     for uchar in ustring:
@@ -9,8 +10,36 @@ def strQ2B(ustring):
             inside_code -= 65248
         rstring += chr(inside_code)
     return rstring
-
+```
 
 
 ### pandas.DataFrame.pipe
 https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.pipe.html
+
+
+
+### kmeans for network graph
+```python
+import numpy as np
+import pandas as pd
+import pickle
+from tqdm.auto import tqdm
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
+
+with open('./Data/df_brand_result_alpha.pickle', 'rb') as f:
+    df = pickle.load(f)
+    
+df = df.drop(['Attribute_Freq15', 'Attribute_Freq15_w2v_filter', 'Attribute_diff'], axis=1)
+df.columns = ['brand_name', 'brand_attr', 'brand_attr_vec']
+df.head()
+
+li = [
+    'CONSTANT 康斯登', 'SEIKO 精工', 'Calvin Klein 凱文克萊', 'ONOLA', 'ORIENT 東方錶', 'CITIZEN 星辰',
+    'adidas 愛迪達', 'NIKE 耐吉', 'native', 'SKECHERS', 'PUMA', 'BROOKS', 'K-SWISS', 'asics 亞瑟士',
+    'T 世家', '立品茶園', '喝茶閒閒', 'xiao de tea 茶曉得', '名池茶葉', '好茶在人間', 'TEAMTE'
+]
+
+
+```
