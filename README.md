@@ -9,3 +9,8 @@ def strQ2B(ustring):
             inside_code -= 65248
         rstring += chr(inside_code)
     return rstring
+
+
+
+### pandas.DataFrame.pipe
+https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.pipe.html
