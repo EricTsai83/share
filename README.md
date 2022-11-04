@@ -88,3 +88,178 @@ cos_sim_matrix.iloc[:5, :5]
 with open('./Data/cos_sim_matrix.json', 'w', enconding='utf-8') as f:
     cos_sim_matrix.to_json(f, force_ascii=False, orient='index')
 ```
+
+
+### network graph
+```python
+import igraph as ig
+import urllib.request, json
+import plotly
+import plotly.graph_objs as go
+import json
+import pandas as pd
+import numpy as np
+from tqdm.auto import tqdm
+
+df = pd.read_json('./Data/network_graph_data.json')
+df.head()
+df['group'].unique()
+len(df)
+cos_sim_matrix = pd.read_json('./Data/cos_sim_matrix.json', orient='index')
+cos_sim_matrix.head()
+
+cos_sim_matrix = cos_sim_matrix.loc[cos+sim_matrix.index.isin(df['brand_name']), cos_sim_matrix.columns.isin(df['brand_name'])]
+threshold = 0.93
+remain_li = []
+for col in cos_sim_matrix.columns:
+    if sum(cos_sim_matrix[col]>=threshold) >= 2:
+        remain_li.append(col)
+        
+        
+cos_sim_matrix = cos_sim_matrix.loc[cos_sim_matrix.index.isin(remain_li), cos_sim_matrix.columns.isin(remain_li)]
+df = df[df['brand_name'].isin(remain_li)].reset_index(drop=True)
+
+# create index hash table
+hash_table = {col: idx for idx, col in enumerate(cos_sim_matrix.columns)}
+li = []
+brand_li = []
+for brand_col in tqdm(cos_sim_matrix.columns):
+    brand_li.append(brand_col)
+    for brand_idx in cos_sim_matrix.index:
+        if brand_idx not in brand_li and cos_sim_matrix.loc[brand_idx, brand_col]>=threshold:
+            li.append({
+                'source': hash_table[brand_col],
+                'target': hash_table[brand_idx],
+                'value': cos_sim_matrix.loc[brand_idx, brand_col]                
+            })
+        else:
+            pass
+# create knowledge graph data
+data = {}
+data['node'] = [{'name': name, 'group': group} for name, group in zip(df['brand_name'], df['group'])]
+data['links'] = li
+len(li)
+
+# Get the number of nodes
+N = len(data['nodes'])
+# Define the list of edges and the graph object from edges
+L = len(data['links'])
+Edges = [(data['links'][k]['source'], data['links'][k]['target']) for k in range(L)]
+G = ig.Graph(Edges, directed=False)
+
+# Extract the node attributes, 'group', and 'name'
+data['node'][0]
+
+labels = []
+group = []
+for node in data['nodes']:
+labels.append(node['name'])
+group.append(node['group'])
+
+
+# Get the positions, set by the Kamada-Kawai layout for 3D graphs
+layt = G.layout('kk', dim=3)  # It is a list of three elements list(the coordinates of nodes)
+len(layt)
+
+# Set data for the Plotly plot of graph
+Xn = [layt[k][0] for k in range(N)]  # x-coordinates of nodes
+Yn = [layt[k][1] for k in range(N)]  # y-coordinates of nodes
+Zn = [layt[k][2] for k in range(N)]  # z-coordinates of nodes
+
+Xe = []
+Ye = []
+Ze = []
+for e in Edges:
+    Xe += [ layt[e[0]][0], layt[e[1]][0], None ]  # x-coordinates of edge ends
+    Ye += [ layt[e[0]][1], layt[e[1]][1], None ]
+    Ze += [ layt[e[0]][2], layt[e[1]][2], None ]
+
+trace1 = go.Scatter3d(
+    x = Xe,
+    y = Ye,
+    z = Ze,
+    mode = 'lines',
+    line=dic(color='rgb(125,125,125)', width=1),
+    hoverinfo='none'
+)
+
+trace2 = go.Scatter3d(
+    x=Xn,
+    y=Yn,
+    z=Zn,
+    mode='markers+text',
+    name='actors',
+    marker=dic(
+        symbol='circle',
+        size=6,
+        color=group,
+        colorscale='Viridis',
+        line=dic(color='rgb(50,50,50)', width=0.5)
+    ),
+    text=labels,
+    hoverinfo='text'
+)
+
+axis = dic(
+    showbackground=False,
+    showline=False,
+    zeroline=False,
+    showgrid=False,
+    showticklabels=False,
+    title=''
+)
+
+layout = go.Layout(
+    title='Network of attribute of brand',
+    width=1000,
+    height=1000,
+    showlegend=False,
+    scene=dic(
+        xaxis=dic(axis),
+        yaxis=dic(axis),
+        zaxis=dic(axis)
+    ),
+    margin=dic(t=100),
+    hovermode='closest',
+    annotations=[
+        dic(
+            showarrow=False,
+            text='',
+            xref='paper',
+            yref='paper',
+            x=0,
+            y=0.1,
+            xanchor='left',
+            yanchor='bottom',
+            font=dic(size=14)
+        )
+    ]
+)
+
+
+data = [trace1, trace2]
+fig = goFigure(data=data, layout=layout)
+fig.update_traces(textposition='top center')
+plotly.offline.plot(fig, auto_open=True), validation=False, filename='test.html', config={'displayModeBar': False}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```
